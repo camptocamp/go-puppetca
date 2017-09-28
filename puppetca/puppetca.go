@@ -11,11 +11,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Client is a Puppet CA client
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
+// NewClient returns a new Client
 func NewClient(baseURL, keyFile, certFile, caFile string) (c Client, err error) {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
@@ -45,6 +47,7 @@ func NewClient(baseURL, keyFile, certFile, caFile string) (c Client, err error) 
 	return
 }
 
+// GetCertByName returns the certificate of a node by its name
 func (c *Client) GetCertByName(nodename string) (string, error) {
 	pem, err := c.Get(fmt.Sprintf("certificate/%s", nodename))
 	if err != nil {
@@ -53,6 +56,7 @@ func (c *Client) GetCertByName(nodename string) (string, error) {
 	return pem, nil
 }
 
+// DeleteCertByName deletes the certificate of a given node
 func (c *Client) DeleteCertByName(nodename string) error {
 	_, err := c.Delete(fmt.Sprintf("certificate_status/%s", nodename))
 	if err != nil {
@@ -61,40 +65,33 @@ func (c *Client) DeleteCertByName(nodename string) error {
 	return nil
 }
 
+// Get performs a GET request
 func (c *Client) Get(path string) (string, error) {
-	fullPath := fmt.Sprintf("%s/puppet-ca/v1/%s", c.baseURL, path)
-	resp, err := c.httpClient.Get(fullPath)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to fetch URL %s", fullPath)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to fetch URL %s, got: %s", fullPath, resp.Status)
-	}
-	defer resp.Body.Close()
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to read body response from %s")
-	}
-
-	return string(content), nil
+	return c.Do("GET", path)
 }
 
+// Delete performs a DELETE request
 func (c *Client) Delete(path string) (string, error) {
+	return c.Do("DELETE", path)
+}
+
+// Do performs an HTTP request
+func (c *Client) Do(method, path string) (string, error) {
 	fullPath := fmt.Sprintf("%s/puppet-ca/v1/%s", c.baseURL, path)
 	uri, err := url.Parse(fullPath)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to parse URL %s", fullPath)
 	}
 	req := http.Request{
-		Method: "DELETE",
+		Method: method,
 		URL:    uri,
 	}
 	resp, err := c.httpClient.Do(&req)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to delete URL %s", fullPath)
+		return "", errors.Wrapf(err, "failed to %s URL %s", method, fullPath)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to delete URL %s, got: %s", fullPath, resp.Status)
+		return "", fmt.Errorf("failed to %s URL %s, got: %s", method, fullPath, resp.Status)
 	}
 	defer resp.Body.Close()
 	content, err := ioutil.ReadAll(resp.Body)
