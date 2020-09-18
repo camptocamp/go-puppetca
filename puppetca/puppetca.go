@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -149,15 +148,12 @@ func (c *Client) Delete(path string, headers map[string]string) (string, error) 
 }
 
 func (c *Client) newHTTPRequest(method, path string) (*http.Request, error) {
-	fullPath := fmt.Sprintf("%s/puppet-ca/v1/%s", c.baseURL, path)
-	uri, err := url.Parse(fullPath)
+	uri := fmt.Sprintf("%s/puppet-ca/v1/%s", c.baseURL, path)
+	req, err := http.NewRequest(method, uri, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse URL %s", fullPath)
+		return nil, errors.Wrapf(err, "failed to create http request for URL %s", uri)
 	}
-	return &http.Request{
-		Method: method,
-		URL:    uri,
-	}, nil
+	return req, nil
 }
 
 // Do performs an HTTP request
