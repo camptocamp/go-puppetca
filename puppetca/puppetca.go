@@ -97,7 +97,10 @@ func (c *Client) DeleteCertByName(nodename string) error {
 // SubmitRequest submits a CSR
 func (c *Client) SubmitRequest(nodename string, pem string) error {
 	// Content-Type: text/plain
-	_, err := c.Put(fmt.Sprintf("certificate_request/%s", nodename), pem, nil)
+	headers := map[string]string{
+		"Content-Type": "text/plain",
+	}
+	_, err := c.Put(fmt.Sprintf("certificate_request/%s", nodename), pem, headers)
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete certificate %s", nodename, pem)
 	}
@@ -107,8 +110,10 @@ func (c *Client) SubmitRequest(nodename string, pem string) error {
 // SignRequest signs a CSR
 func (c *Client) SignRequest(nodename string) error {
 	action := "{\"desired_state\":\"signed\"}"
-	// Content-Type: text/pson
-	_, err := c.Put(fmt.Sprintf("certificate_status/%s", nodename), action, nil)
+	headers := map[string]string{
+		"Content-Type": "text/pson",
+	}
+	_, err := c.Put(fmt.Sprintf("certificate_status/%s", nodename), action, headers)
 	if err != nil {
 		return errors.Wrapf(err, "failed to sign certificate %s", nodename)
 	}
