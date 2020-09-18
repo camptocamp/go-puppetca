@@ -102,7 +102,7 @@ func (c *Client) SubmitRequest(nodename string, pem string) error {
 	}
 	_, err := c.Put(fmt.Sprintf("certificate_request/%s", nodename), pem, headers)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete certificate %s", nodename, pem)
+		return errors.Wrapf(err, "failed to submit CSR %s", nodename)
 	}
 	return nil
 }
@@ -115,7 +115,7 @@ func (c *Client) SignRequest(nodename string) error {
 	}
 	_, err := c.Put(fmt.Sprintf("certificate_status/%s", nodename), action, headers)
 	if err != nil {
-		return errors.Wrapf(err, "failed to sign certificate %s", nodename)
+		return errors.Wrapf(err, "failed to sign CSR %s", nodename)
 	}
 	return nil
 }
