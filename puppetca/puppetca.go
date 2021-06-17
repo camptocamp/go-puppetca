@@ -119,6 +119,19 @@ func (c *Client) SignRequest(nodename string) error {
 	return nil
 }
 
+// RevokeCert revokes a certificate
+func (c *Client) RevokeCert(nodename string) error {
+	action := "{\"desired_state\":\"revoked\"}"
+	headers := map[string]string{
+		"Content-Type": "text/pson",
+	}
+	_, err := c.Put(fmt.Sprintf("certificate_status/%s", nodename), action, headers)
+	if err != nil {
+		return errors.Wrapf(err, "failed to revoke certificate %s", nodename)
+	}
+	return nil
+}
+
 // Get performs a GET request
 func (c *Client) Get(path string, headers map[string]string) (string, error) {
 	req, err := c.newHTTPRequest("GET", path)
