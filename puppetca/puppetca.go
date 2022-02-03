@@ -171,7 +171,7 @@ func (c *Client) Do(req *http.Request, headers map[string]string) (string, error
 	defer resp.Body.Close()
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to read body response from %s")
+		return "", errors.Wrapf(err, "failed to read body response")
 	}
 
 	return string(content), nil
