@@ -76,8 +76,8 @@ func NewClient(baseURL, keyStr, certStr, caStr string) (c Client, err error) {
 }
 
 // GetCertByName returns the certificate of a node by its name
-func (c *Client) GetCertByName(nodename string) (string, error) {
-	pem, err := c.Get(fmt.Sprintf("certificate/%s", nodename), nil)
+func (c *Client) GetCertByName(nodename, env string) (string, error) {
+	pem, err := c.Get(fmt.Sprintf("certificate/%s", nodename), env, nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to retrieve certificate %s", nodename)
 	}
@@ -85,8 +85,8 @@ func (c *Client) GetCertByName(nodename string) (string, error) {
 }
 
 // DeleteCertByName deletes the certificate of a given node
-func (c *Client) DeleteCertByName(nodename string) error {
-	_, err := c.Delete(fmt.Sprintf("certificate_status/%s", nodename), nil)
+func (c *Client) DeleteCertByName(nodename, env string) error {
+	_, err := c.Delete(fmt.Sprintf("certificate_status/%s", nodename), env, nil)
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete certificate %s", nodename)
 	}
@@ -94,12 +94,12 @@ func (c *Client) DeleteCertByName(nodename string) error {
 }
 
 // SubmitRequest submits a CSR
-func (c *Client) SubmitRequest(nodename string, pem string) error {
+func (c *Client) SubmitRequest(nodename, pem, env string) error {
 	// Content-Type: text/plain
 	headers := map[string]string{
 		"Content-Type": "text/plain",
 	}
-	_, err := c.Put(fmt.Sprintf("certificate_request/%s", nodename), pem, headers)
+	_, err := c.Put(fmt.Sprintf("certificate_request/%s", nodename), env, pem, headers)
 	if err != nil {
 		return errors.Wrapf(err, "failed to submit CSR %s", nodename)
 	}
@@ -107,12 +107,12 @@ func (c *Client) SubmitRequest(nodename string, pem string) error {
 }
 
 // SignRequest signs a CSR
-func (c *Client) SignRequest(nodename string) error {
+func (c *Client) SignRequest(nodename, env string) error {
 	action := "{\"desired_state\":\"signed\"}"
 	headers := map[string]string{
 		"Content-Type": "text/pson",
 	}
-	_, err := c.Put(fmt.Sprintf("certificate_status/%s", nodename), action, headers)
+	_, err := c.Put(fmt.Sprintf("certificate_status/%s", nodename), env, action, headers)
 	if err != nil {
 		return errors.Wrapf(err, "failed to sign CSR %s", nodename)
 	}
@@ -120,29 +120,44 @@ func (c *Client) SignRequest(nodename string) error {
 }
 
 // Get performs a GET request
-func (c *Client) Get(path string, headers map[string]string) (string, error) {
+func (c *Client) Get(path, env string, headers map[string]string) (string, error) {
 	req, err := c.newHTTPRequest("GET", path)
 	if err != nil {
 		return "", err
+	}
+	if env != "" {
+		q := req.URL.Query()
+		q.Add("environment", env)
+		req.URL.RawQuery = q.Encode()
 	}
 	return c.Do(req, headers)
 }
 
 // Put performs a PUT request
-func (c *Client) Put(path, data string, headers map[string]string) (string, error) {
+func (c *Client) Put(path, env, data string, headers map[string]string) (string, error) {
 	req, err := c.newHTTPRequest("PUT", path)
 	if err != nil {
 		return "", err
+	}
+	if env != "" {
+		q := req.URL.Query()
+		q.Add("environment", env)
+		req.URL.RawQuery = q.Encode()
 	}
 	req.Body = ioutil.NopCloser(strings.NewReader(data))
 	return c.Do(req, headers)
 }
 
 // Delete performs a DELETE request
-func (c *Client) Delete(path string, headers map[string]string) (string, error) {
+func (c *Client) Delete(path, env string, headers map[string]string) (string, error) {
 	req, err := c.newHTTPRequest("DELETE", path)
 	if err != nil {
 		return "", err
+	}
+	if env != "" {
+		q := req.URL.Query()
+		q.Add("environment", env)
+		req.URL.RawQuery = q.Encode()
 	}
 	return c.Do(req, headers)
 }
