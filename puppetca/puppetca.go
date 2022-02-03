@@ -84,6 +84,15 @@ func (c *Client) GetCertByName(nodename, env string) (string, error) {
 	return pem, nil
 }
 
+// GetRequest return a submitted CSR if any
+func (c *Client) GetRequest(nodename, env string) (string, error) {
+	pem, err := c.Get(fmt.Sprintf("certificate_request/%s", nodename), env, nil)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to retrieve certificate %s", nodename)
+	}
+	return pem, nil
+}
+
 // DeleteCertByName deletes the certificate of a given node
 func (c *Client) DeleteCertByName(nodename, env string) error {
 	_, err := c.Delete(fmt.Sprintf("certificate_status/%s", nodename), env, nil)
